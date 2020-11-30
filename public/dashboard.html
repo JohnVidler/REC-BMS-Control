@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>BMS Dashboard</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link rel="stylesheet" href="/css/pure-min.css" />
+	<!--[if lte IE 8]>
+		<link rel="stylesheet" href="/css/grids-responsive-old-ie-min.css" />
+	<![endif]-->
+	<!--[if gt IE 8]><!-->
+		<link rel="stylesheet" href="/css/grids-responsive-min.css" />
+	<!--<![endif]-->
+
+	<script src="/js/gauge.min.js"></script>
+	<script src="/js/Chart.min.js"></script>
+</head>
+<body>
+
+	<div class="pure-g">
+		<div class="pure-u-1-1">
+			<h3>BMS Dashboard</h3>
+		</div>
+
+		<div class="pure-u-1-5" style="text-align: center;">
+			<canvas id="packVoltage" width="200" height="100"></canvas><br />
+			<p>Pack Voltage: <span id="packVoltageValue">...</span> V</p>
+		</div>
+
+		<div class="pure-u-1-5" style="text-align: center;">
+			<canvas id="packCurrent" width="200" height="100"></canvas><br />
+			<p>Current Draw: <span id="packCurrentValue">...</span> A</p>
+		</div>
+
+		<div class="pure-u-1-5" style="text-align: center;">
+			<canvas id="packCharge" width="200" height="100"></canvas><br />
+			<p>Pack Charge: <span id="packChargeValue">...</span> %</p>
+		</div>
+
+		<div class="pure-u-1-5" style="text-align: center;">
+			<canvas id="packHealth" width="200" height="100"></canvas><br />
+			<p>Pack Health: <span id="packHealthValue">...</span> %</p>
+		</div>
+
+		<div class="pure-u-1-5" style="text-align: center;">
+			<canvas id="packTemperature" width="200" height="100"></canvas><br />
+			<p>Pack Temperature: <span id="packTemperatureValue">...</span> degC</p>
+		</div>
+
+		<div class="pure-u-1-1" style="text-align: center;" >
+			<div style="width: 640px; height: 480px; margin-left: auto; margin-right: auto;">
+				<canvas id="cellVoltages"></canvas><br />
+			</div>
+			<p>Cell Voltages</p>
+		</div>
+	</div>
+
+	<script>
+		window.onload = function(){
+			var opts = {
+				angle: 0.15, // The span of the gauge arc
+				lineWidth: 0.44, // The line thickness
+				radiusScale: 1, // Relative radius
+				pointer: {
+					length: 0.6, // // Relative to gauge radius
+					strokeWidth: 0.071, // The thickness
+					color: '#000000' // Fill color
+				},
+				limitMax: false,     // If false, max value increases automatically if value > maxValue
+				limitMin: false,     // If true, the min value of the gauge will be fixed
+				colorStart: '#6FADCF',   // Colors
+				colorStop: '#8FC0DA',    // just experiment with them
+				strokeColor: '#E0E0E0',  // to see which ones work best for you
+				generateGradient: true,
+				highDpiSupport: true,     // High resolution support
+
+			};
+
+			var gauges = {};
+
+			gauges.packVoltage = new Gauge(document.getElementById('packVoltage')).setOptions(opts); // create sexy gauge!
+			gauges.packVoltage.maxValue = 54; // set max gauge value
+			gauges.packVoltage.setMinValue(0);  // Prefer setter over gauge.minValue = 0
+			gauges.packVoltage.animationSpeed = 32; // set animation speed (32 is default value)
+			gauges.packVoltage.set(0); // set actual value
+
+			gauges.packCurrent = new Gauge(document.getElementById('packCurrent')).setOptions(opts); // create sexy gauge!
+			gauges.packCurrent.maxValue = 400; // set max gauge value
+			gauges.packCurrent.setMinValue(0);  // Prefer setter over gauge.minValue = 0
+			gauges.packCurrent.animationSpeed = 32; // set animation speed (32 is default value)
+			gauges.packCurrent.set(0); // set actual value
+
+			gauges.packCharge = new Gauge(document.getElementById('packCharge')).setOptions(opts); // create sexy gauge!
+			gauges.packCharge.maxValue = 100; // set max gauge value
+			gauges.packCharge.setMinValue(0);  // Prefer setter over gauge.minValue = 0
+			gauges.packCharge.animationSpeed = 32; // set animation speed (32 is default value)
+			gauges.packCharge.set(0); // set actual value
+
+			gauges.packHealth = new Gauge(document.getElementById('packHealth')).setOptions(opts); // create sexy gauge!
+			gauges.packHealth.maxValue = 100; // set max gauge value
+			gauges.packHealth.setMinValue(0);  // Prefer setter over gauge.minValue = 0
+			gauges.packHealth.animationSpeed = 32; // set animation speed (32 is default value)
+			gauges.packHealth.set(0); // set actual value
+
+			gauges.packTemperature = new Gauge(document.getElementById('packTemperature')).setOptions(opts); // create sexy gauge!
+			gauges.packTemperature.maxValue = 50; // set max gauge value
+			gauges.packTemperature.setMinValue(-50);  // Prefer setter over gauge.minValue = 0
+			gauges.packTemperature.animationSpeed = 32; // set animation speed (32 is default value)
+			gauges.packTemperature.set(0); // set actual value
+
+
+			// Cell voltage bar graph
+			var cellVoltages = {
+				labels: [
+					'1',
+					'2',
+					'3',
+					'4',
+					'5',
+					'6',
+					'7',
+					'8',
+					'9',
+					'10',
+					'11',
+					'12',
+					'13',
+					'14',
+					'15',
+					'16',
+				],
+				datasets: [
+					{
+						label: "Cell Voltage",
+						data: [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]
+					}
+				]
+			};
+			var voltageChart = new Chart(document.getElementById('cellVoltages'), {
+				type: 'bar',
+				data: cellVoltages,
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					layout: { padding: 10 },
+					legend: { display: false },
+					scales: {
+						yAxes: [{
+							scaleLabel: {
+								labelString: 'Voltage (v)',
+								display: true
+							},
+							ticks: { beginAtZero:true }
+						}],
+						xAxes: [{
+							scaleLabel: {
+								labelString: 'Cell Number',
+								display: true
+							},
+						}]
+					}
+				}
+			});
+
+			setInterval( function () {
+				fetch( "/state" )
+					.then( response => response.json() )
+					.then( json => {
+						console.log( json );
+
+						for( var i=0; i<json.cellVoltage.length; i++ ) {
+							cellVoltages.datasets[0].data[i] = json.cellVoltage[i];
+
+							if( json.cellDelta[i] > 0 )
+								cellVoltages.labels[i] = "+" +i+ "+";
+							else if( json.cellDelta[i] > 0 )
+								cellVoltages.labels[i] = "+" +i+ "+";
+							else
+								cellVoltages.labels[i] = ""+i;
+						}
+						voltageChart.update();
+
+						gauges.packVoltage.set( json.packVoltage );
+						document.getElementById('packVoltageValue').innerText = json.packVoltage;
+
+						gauges.packCurrent.set( json.current );
+						document.getElementById('packCurrentValue').innerText = json.current;
+
+						gauges.packCharge.set( json.charge * 100 );
+						document.getElementById('packChargeValue').innerText = Math.round(json.charge);
+
+						gauges.packHealth.set( json.health * 100 );
+						document.getElementById('packHealthValue').innerText = Math.round(json.health);
+
+						gauges.packTemperature.set( json.temperature );
+						document.getElementById('packTemperatureValue').innerText = json.temperature;
+					} );
+			}, 2000 );
+		};
+	</script>
+</body>
+</html>
